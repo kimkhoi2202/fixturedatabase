@@ -24,8 +24,6 @@
     --input: 220 13% 91%;
     --ring: 224 71.4% 4.1%;
     --radius: 0.5rem;
-    --font-heading: 'Inter', sans-serif; /* Define your font-heading variable */
-    --font-body: 'Inter', sans-serif; /* Define your font-body variable */
   }
 
   * {

@@ -1,130 +1,163 @@
-"use client"
+"use client";
 
-import { useState, useMemo, ChangeEvent } from "react"
-import { Input } from "@/components/ui/input"
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu"
-import { Button } from "@/components/ui/button"
-import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { ArrowUpDown, Search } from "lucide-react"
-import { Label } from "@/components/ui/label"
+import { useState, useEffect, useMemo, ChangeEvent } from "react";
+import { Input } from "@/components/ui/input";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
+import {
+  Table,
+  TableHeader,
+  TableRow,
+  TableHead,
+  TableBody,
+  TableCell,
+} from "@/components/ui/table";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ArrowUpDown, Search } from "lucide-react";
+import { Label } from "@/components/ui/label";
 
 type DataItem = {
-  id: string
-  dateAdded: string
-  owner: string
-  coOwners: string[]
-  series: string
-  model: string
-  brokenParts: string
-}
+  id: string;
+  dateAdded: string;
+  owner: string;
+  coOwners: string[];
+  series: string;
+  model: string;
+  brokenParts: string;
+};
 
-const placeholderData: DataItem[] = [
-  { id: "f12345", dateAdded: "2024-07-01", owner: "123456", coOwners: ["654321", "234567"], series: "A1", model: "X100", brokenParts: "None" },
-  { id: "f67890", dateAdded: "2024-07-02", owner: "789012", coOwners: ["890123"], series: "B2", model: "Y200", brokenParts: "Screen" },
-  { id: "f34567", dateAdded: "2024-07-03", owner: "345678", coOwners: [], series: "C3", model: "Z300", brokenParts: "Keyboard" }
-]
-
-const seriesOptions = ["A1", "B2", "C3"]
-const modelOptions = ["X100", "Y200", "Z300"]
+const seriesOptions = ["A1", "B2", "C3"];
+const modelOptions = ["X100", "Y200", "Z300"];
 
 export default function Component() {
-  const [searchTerm, setSearchTerm] = useState<string>("")
-  const [sortColumn, setSortColumn] = useState<keyof DataItem>("id")
-  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc")
-  const [showModal, setShowModal] = useState<boolean>(false)
-  const [modalStep, setModalStep] = useState<number>(1)
-  const [modalData, setModalData] = useState<Partial<DataItem>>({})
-  const [idError, setIdError] = useState<string>("")
-  const [ownerError, setOwnerError] = useState<string>("")
-  const [coOwnerError, setCoOwnerError] = useState<string>("")
-  const [data, setData] = useState<DataItem[]>(placeholderData)
+  const [searchTerm, setSearchTerm] = useState<string>("");
+  const [sortColumn, setSortColumn] = useState<keyof DataItem>("id");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+  const [showModal, setShowModal] = useState<boolean>(false);
+  const [modalStep, setModalStep] = useState<number>(1);
+  const [modalData, setModalData] = useState<Partial<DataItem>>({});
+  const [idError, setIdError] = useState<string>("");
+  const [ownerError, setOwnerError] = useState<string>("");
+  const [coOwnerError, setCoOwnerError] = useState<string>("");
+  const [data, setData] = useState<DataItem[]>([]);
+
+  useEffect(() => {
+    const loadData = async () => {
+      const sheetId = process.env.NEXT_PUBLIC_SHEET_ID!;
+      const response = await fetch(`/api/fetchData?sheetId=${sheetId}`);
+      const fetchedData = await response.json();
+      setData(fetchedData);
+    };
+
+    loadData();
+  }, []);
 
   const handleSearch = (e: ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(e.target.value)
-  }
+    setSearchTerm(e.target.value);
+  };
 
   const filteredData = useMemo(() => {
-    return data.filter(item =>
-      item.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.owner.toLowerCase().includes(searchTerm.toLowerCase())
-    )
-  }, [searchTerm, data])
+    return data.filter(
+      (item) =>
+        item.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.owner.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [searchTerm, data]);
 
   const sortedData = useMemo(() => {
     return filteredData.sort((a, b) => {
-      if (a[sortColumn] < b[sortColumn]) return sortDirection === "asc" ? -1 : 1
-      if (a[sortColumn] > b[sortColumn]) return sortDirection === "asc" ? 1 : -1
-      return 0
-    })
-  }, [filteredData, sortColumn, sortDirection])
+      if (a[sortColumn] < b[sortColumn]) return sortDirection === "asc" ? -1 : 1;
+      if (a[sortColumn] > b[sortColumn]) return sortDirection === "asc" ? 1 : -1;
+      return 0;
+    });
+  }, [filteredData, sortColumn, sortDirection]);
 
   const handleSort = (column: keyof DataItem) => {
     if (sortColumn === column) {
-      setSortDirection(sortDirection === "asc" ? "desc" : "asc")
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
     } else {
-      setSortColumn(column)
-      setSortDirection("asc")
+      setSortColumn(column);
+      setSortDirection("asc");
     }
-  }
+  };
 
   const handleAction = (action: string) => {
     if (action === "add") {
-      setModalStep(1)
-      setModalData({})
-      setShowModal(true)
+      setModalStep(1);
+      setModalData({});
+      setShowModal(true);
     }
-  }
+  };
 
   const handleCancel = () => {
-    setShowModal(false)
-    setIdError("")
-    setOwnerError("")
-    setCoOwnerError("")
-    setModalData({})
-  }
+    setShowModal(false);
+    setIdError("");
+    setOwnerError("");
+    setCoOwnerError("");
+    setModalData({});
+  };
 
   const handleNext = () => {
     if (modalStep === 1 && !/^f\d{5}$/.test(modalData.id ?? "")) {
-      setIdError("ID must follow the format 'f' followed by 5 digits")
-      return
+      setIdError("ID must follow the format 'f' followed by 5 digits");
+      return;
     }
     if (modalStep === 2 && !/^\d{6}$/.test(modalData.owner ?? "")) {
-      setOwnerError("Owner must be 6 digits")
-      return
+      setOwnerError("Owner must be 6 digits");
+      return;
     }
-    if (modalStep === 3 && modalData.coOwners?.some(coOwner => !/^\d{6}$/.test(coOwner))) {
-      setCoOwnerError("Each co-owner must be 6 digits")
-      return
+    if (modalStep === 3) {
+      const coOwners = modalData.coOwners?.filter((coOwner) => coOwner !== "") ?? [];
+      const invalidCoOwners = coOwners.filter((coOwner) => !/^\d{6}$/.test(coOwner.trim()));
+      if (invalidCoOwners.length > 0) {
+        setCoOwnerError("Each co-owner must follow the 6 digits format");
+        return;
+      }
+      setModalData({ ...modalData, coOwners });
     }
-    setModalStep(modalStep + 1)
-    setIdError("")
-    setOwnerError("")
-    setCoOwnerError("")
-  }
+    setModalStep(modalStep + 1);
+    setIdError("");
+    setOwnerError("");
+    setCoOwnerError("");
+  };
 
   const handleBack = () => {
-    setModalStep(modalStep - 1)
-  }
+    setModalStep(modalStep - 1);
+  };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const newItem: DataItem = {
       id: modalData.id ?? "",
-      dateAdded: new Date().toISOString().split('T')[0],
+      dateAdded: new Date().toISOString().split("T")[0],
       owner: modalData.owner ?? "",
       coOwners: modalData.coOwners ?? [],
       series: modalData.series ?? "",
       model: modalData.model ?? "",
-      brokenParts: ""
-    }
-    setData([...data, newItem])
-    setShowModal(false)
-  }
+      brokenParts: "",
+    };
+    const newData = [...data, newItem];
+    setData(newData);
+
+    const sheetId = process.env.NEXT_PUBLIC_SHEET_ID!;
+    await fetch("/api/updateData", {
+      method: "POST",
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ sheetId, data: newData }),
+    });
+    setShowModal(false);
+  };
 
   const handleCoOwnersChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value
-    setModalData({ ...modalData, coOwners: value.split(",") })
-  }
+    const value = e.target.value;
+    setModalData({ ...modalData, coOwners: value.split(",") });
+  };
 
   return (
     <div className="container mx-auto px-4 mt-8">
@@ -215,7 +248,9 @@ export default function Component() {
           </DialogHeader>
           {modalStep === 1 && (
             <div className="relative mb-4">
-              <Label htmlFor="id" className="block text-sm font-medium text-gray-700">ID</Label>
+              <Label htmlFor="id" className="block text-sm font-medium text-gray-700">
+                ID
+              </Label>
               <Input
                 id="id"
                 placeholder="f12345"
@@ -225,7 +260,9 @@ export default function Component() {
               />
               {idError && <div className="text-red-500 text-sm mt-1">{idError}</div>}
               <div className="flex justify-end gap-2 mt-4">
-                <Button variant="outline" onClick={handleCancel}>Cancel</Button>
+                <Button variant="outline" onClick={handleCancel}>
+                  Cancel
+                </Button>
                 <Button onClick={handleNext}>Next</Button>
               </div>
             </div>
@@ -233,7 +270,9 @@ export default function Component() {
           {modalStep === 2 && (
             <div className="flex flex-col gap-4">
               <div className="relative">
-                <Label htmlFor="owner" className="block text-sm font-medium text-gray-700">Owner</Label>
+                <Label htmlFor="owner" className="block text-sm font-medium text-gray-700">
+                  Owner
+                </Label>
                 <Input
                   id="owner"
                   placeholder="Owner"
@@ -244,7 +283,9 @@ export default function Component() {
                 {ownerError && <div className="text-red-500 text-sm mt-1">{ownerError}</div>}
               </div>
               <div className="flex justify-between gap-2">
-                <Button variant="outline" onClick={handleBack}>Back</Button>
+                <Button variant="outline" onClick={handleBack}>
+                  Back
+                </Button>
                 <Button onClick={handleNext}>Next</Button>
               </div>
             </div>
@@ -252,20 +293,26 @@ export default function Component() {
           {modalStep === 3 && (
             <div className="flex flex-col gap-4">
               <div className="relative">
-                <Label htmlFor="coOwners" className="block text-sm font-medium text-gray-700">Co-owners (optional)</Label>
+                <Label htmlFor="coOwners" className="block text-sm font-medium text-gray-700">
+                  Co-owners (optional)
+                </Label>
                 <Input
                   id="coOwners"
                   placeholder="Co-owners (separated by commas)"
-                  value={modalData.coOwners?.join(", ") ?? ""}
+                  value={modalData.coOwners?.join(",") ?? ""}
                   onChange={handleCoOwnersChange}
                   className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                 />
                 {coOwnerError && <div className="text-red-500 text-sm mt-1">{coOwnerError}</div>}
               </div>
               <div className="flex justify-between gap-2">
-                <Button variant="outline" onClick={handleBack}>Back</Button>
+                <Button variant="outline" onClick={handleBack}>
+                  Back
+                </Button>
                 <div className="flex gap-2">
-                  <Button variant="outline" onClick={handleNext}>Skip</Button>
+                  <Button variant="outline" onClick={handleNext}>
+                    Skip
+                  </Button>
                   <Button onClick={handleNext}>Next</Button>
                 </div>
               </div>
@@ -274,7 +321,9 @@ export default function Component() {
           {modalStep === 4 && (
             <div className="flex flex-col gap-4">
               <div className="relative">
-                <Label htmlFor="series" className="block text-sm font-medium text-gray-700">Series</Label>
+                <Label htmlFor="series" className="block text-sm font-medium text-gray-700">
+                  Series
+                </Label>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm bg-white text-black hover:bg-white">
@@ -291,7 +340,9 @@ export default function Component() {
                 </DropdownMenu>
               </div>
               <div className="flex justify-between gap-2 mt-4">
-                <Button variant="outline" onClick={handleBack}>Back</Button>
+                <Button variant="outline" onClick={handleBack}>
+                  Back
+                </Button>
                 <Button onClick={handleNext}>Next</Button>
               </div>
             </div>
@@ -299,7 +350,9 @@ export default function Component() {
           {modalStep === 5 && (
             <div className="flex flex-col gap-4">
               <div className="relative">
-                <Label htmlFor="model" className="block text-sm font-medium text-gray-700">Model</Label>
+                <Label htmlFor="model" className="block text-sm font-medium text-gray-700">
+                  Model
+                </Label>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm bg-white text-black hover:bg-white">
@@ -316,7 +369,9 @@ export default function Component() {
                 </DropdownMenu>
               </div>
               <div className="flex justify-between gap-2 mt-4">
-                <Button variant="outline" onClick={handleBack}>Back</Button>
+                <Button variant="outline" onClick={handleBack}>
+                  Back
+                </Button>
                 <Button onClick={handleSave}>Save</Button>
               </div>
             </div>
@@ -324,5 +379,5 @@ export default function Component() {
         </DialogContent>
       </Dialog>
     </div>
-  )
+  );
 }
